@@ -1,21 +1,21 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { getContactInfo } from "@/actions/settings";
 
-export function Footer() {
+export async function Footer() {
+  const contactInfo = await getContactInfo();
+
   return (
     <footer className="bg-primary text-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Brand */}
           <div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-[0.2em]">
-                MATIAS PEREZ
-              </span>
-              <span className="text-[10px] tracking-[0.3em] text-white/60 uppercase">
-                inmuebles
-              </span>
-            </div>
+            <img
+              src="/images/logo-dark.png"
+              alt="Matias Perez Inmuebles"
+              className="h-8 w-auto sm:h-10"
+            />
             <p className="mt-4 text-sm text-white/70">
               Tu inmobiliaria de confianza. Encontrá la propiedad ideal para vos.
             </p>
@@ -54,15 +54,15 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               <li className="flex items-center gap-2 text-sm text-white/70">
                 <Phone size={16} />
-                <span>+54 9 11 1234-5678</span>
+                <span>{contactInfo.contact_phone}</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-white/70">
                 <Mail size={16} />
-                <span>info@matiasperezinmuebles.com</span>
+                <span>{contactInfo.contact_email}</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-white/70">
                 <MapPin size={16} />
-                <span>Buenos Aires, Argentina</span>
+                <span>{contactInfo.contact_address}</span>
               </li>
             </ul>
           </div>

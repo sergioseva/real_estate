@@ -51,7 +51,7 @@ export function PropertyForm({ property }: { property?: Property }) {
 
       if (isEditing) {
         await updateProperty(property.id, formData);
-        router.push("/admin/propiedades");
+        router.push("/admin/dashboard");
       } else {
         const created = await createProperty(formData);
         router.push(`/admin/propiedades/${created.id}/editar`);

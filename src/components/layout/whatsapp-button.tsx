@@ -1,12 +1,11 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { buildWhatsAppUrl } from "@/lib/utils";
 
-export function WhatsAppButton() {
+export function WhatsAppButton({ phoneNumber }: { phoneNumber: string }) {
   const url = buildWhatsAppUrl(
-    WHATSAPP_NUMBER,
+    phoneNumber,
     "Hola! Me comunico desde el sitio web de Matias Perez Inmuebles."
   );
 

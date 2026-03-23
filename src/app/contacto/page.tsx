@@ -1,4 +1,5 @@
 import { ContactForm } from "@/components/forms/contact-form";
+import { getContactInfo } from "@/actions/settings";
 import { Phone, Mail, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -6,7 +7,9 @@ export const metadata: Metadata = {
   title: "Contacto",
 };
 
-export default function ContactoPage() {
+export default async function ContactoPage() {
+  const contactInfo = await getContactInfo();
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="text-center">
@@ -29,7 +32,7 @@ export default function ContactoPage() {
               </div>
               <div>
                 <p className="text-sm font-medium">Telefono</p>
-                <p className="text-sm text-muted-foreground">+54 9 11 1234-5678</p>
+                <p className="text-sm text-muted-foreground">{contactInfo.contact_phone}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -38,7 +41,7 @@ export default function ContactoPage() {
               </div>
               <div>
                 <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">info@matiasperezinmuebles.com</p>
+                <p className="text-sm text-muted-foreground">{contactInfo.contact_email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -47,7 +50,7 @@ export default function ContactoPage() {
               </div>
               <div>
                 <p className="text-sm font-medium">Direccion</p>
-                <p className="text-sm text-muted-foreground">Buenos Aires, Argentina</p>
+                <p className="text-sm text-muted-foreground">{contactInfo.contact_address}</p>
               </div>
             </div>
           </div>

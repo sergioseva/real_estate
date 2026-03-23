@@ -1,6 +1,7 @@
 import { getPropertyStats } from "@/actions/properties";
 import { getUnreadTasacionCount } from "@/actions/tasaciones";
 import { StatsCards } from "@/components/admin/stats-cards";
+import { SavedBanner } from "@/components/admin/saved-banner";
 import { FileText } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -9,7 +10,12 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string }>;
+}) {
+  const { saved } = await searchParams;
   const [stats, unreadTasaciones] = await Promise.all([
     getPropertyStats(),
     getUnreadTasacionCount(),
@@ -17,6 +23,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
+      {saved && <SavedBanner />}
       <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
       <p className="text-muted-foreground">
         Bienvenido al panel de administracion

@@ -52,6 +52,13 @@ export interface TasacionRequest {
   created_at: string;
 }
 
+export interface ContactInfo {
+  contact_phone: string;
+  contact_email: string;
+  contact_address: string;
+  whatsapp_number: string;
+}
+
 export interface PropertyFilters {
   operacion?: string;
   tipo_propiedad?: string;

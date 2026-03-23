@@ -1,39 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
+import { sendContactEmail } from "@/actions/contact";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 export function ContactForm() {
-  const [sent, setSent] = useState(false);
+  const [state, formAction, pending] = useActionState(
+    async (_prev: { success?: boolean; error?: string } | null, formData: FormData) => {
+      return await sendContactEmail(formData);
+    },
+    null
+  );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const subject = encodeURIComponent("Consulta desde el sitio web");
-    const body = encodeURIComponent(
-      `Nombre: ${formData.get("nombre")}\nEmail: ${formData.get("email")}\nTelefono: ${formData.get("telefono")}\n\n${formData.get("mensaje")}`
-    );
-    window.location.href = `mailto:info@matiasperezinmuebles.com?subject=${subject}&body=${body}`;
-    setSent(true);
-  };
-
-  if (sent) {
+  if (state?.success) {
     return (
       <div className="rounded-lg bg-green-50 p-6 text-center">
         <h3 className="text-lg font-semibold text-green-800">
-          Redirigiendo a tu cliente de email...
+          Mensaje enviado
         </h3>
         <p className="mt-2 text-sm text-green-700">
-          Si no se abrio automaticamente, escribinos a info@matiasperezinmuebles.com
+          Gracias por tu consulta. Te responderemos a la brevedad.
         </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form action={formAction} className="space-y-4">
+      {state?.error && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {state.error}
+        </div>
+      )}
       <Input
         id="contact-nombre"
         name="nombre"
@@ -65,8 +65,8 @@ export function ContactForm() {
         rows={5}
         required
       />
-      <Button type="submit" size="lg" className="w-full">
-        Enviar mensaje
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        {pending ? "Enviando..." : "Enviar mensaje"}
       </Button>
     </form>
   );

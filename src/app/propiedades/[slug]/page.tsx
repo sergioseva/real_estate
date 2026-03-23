@@ -6,7 +6,8 @@ import { PropertyMapWrapper } from "@/components/properties/property-map-wrapper
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatPrice, buildWhatsAppUrl } from "@/lib/utils";
-import { WHATSAPP_NUMBER, SITE_NAME } from "@/lib/constants";
+import { SITE_NAME } from "@/lib/constants";
+import { getContactInfo } from "@/actions/settings";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -34,8 +35,9 @@ export default async function PropertyDetailPage({
 
   if (!property) notFound();
 
+  const contactInfo = await getContactInfo();
   const whatsappUrl = buildWhatsAppUrl(
-    WHATSAPP_NUMBER,
+    contactInfo.whatsapp_number,
     `Hola! Estoy interesado en la propiedad: ${property.titulo} (${property.operacion}). Link: ${property.slug}`
   );
 

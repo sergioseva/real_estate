@@ -156,7 +156,7 @@ export async function createProperty(formData: FormData) {
     longitud: formData.get("longitud") ? Number(formData.get("longitud")) : null,
     amenities: JSON.parse((formData.get("amenities") as string) || "[]"),
     destacada: formData.get("destacada") === "true",
-    activa: formData.get("activa") !== "false",
+    activa: formData.get("activa") === "true",
   };
 
   const { data, error } = await supabase
@@ -203,7 +203,7 @@ export async function updateProperty(id: string, formData: FormData) {
     longitud: formData.get("longitud") ? Number(formData.get("longitud")) : null,
     amenities: JSON.parse((formData.get("amenities") as string) || "[]"),
     destacada: formData.get("destacada") === "true",
-    activa: formData.get("activa") !== "false",
+    activa: formData.get("activa") === "true",
   };
 
   const { error } = await supabase

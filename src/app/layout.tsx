@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/navbar";
+import { PublicShell } from "@/components/layout/public-shell";
 import { Footer } from "@/components/layout/footer";
-import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { getContactInfo } from "@/actions/settings";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 
 const geist = Geist({
@@ -19,18 +19,22 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const contactInfo = await getContactInfo();
+
   return (
     <html lang="es" className={`${geist.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <WhatsAppButton />
+        <PublicShell
+          footer={<Footer />}
+          whatsappNumber={contactInfo.whatsapp_number}
+        >
+          <main className="flex-1">{children}</main>
+        </PublicShell>
       </body>
     </html>
   );

@@ -54,8 +54,6 @@ export const ANTIGUEDADES = [
 
 export const ITEMS_PER_PAGE = 12;
 
-export const WHATSAPP_NUMBER = "5491112345678";
-
 export const SITE_NAME = "Matias Perez Inmuebles";
 export const SITE_DESCRIPTION =
   "Encontrá tu próximo hogar. Propiedades en venta y alquiler.";

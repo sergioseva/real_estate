@@ -18,13 +18,12 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex flex-col items-center">
-          <span className="text-xl font-bold tracking-[0.2em] text-primary">
-            MATIAS PEREZ
-          </span>
-          <span className="text-[10px] tracking-[0.3em] text-muted-foreground uppercase">
-            inmuebles
-          </span>
+        <Link href="/">
+          <img
+            src="/images/logo-white.jpeg"
+            alt="Matias Perez Inmuebles"
+            className="h-8 w-auto sm:h-10"
+          />
         </Link>
 
         {/* Desktop nav */}
