@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.github
+deploy
+supabase
+*.md
+.env*
+.dockerignore

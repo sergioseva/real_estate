@@ -21,7 +21,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { deleteImage, reorderImages } from "@/actions/images";
-import { createClient } from "@/lib/supabase/client";
 import type { PropertyImage } from "@/types";
 
 function SortableImage({
@@ -136,40 +135,20 @@ export function ImageUploader({
 
       setUploading(true);
       try {
-        const supabase = createClient();
-
         for (const file of Array.from(files)) {
-          const fileExt = file.name.split(".").pop();
-          const fileName = `${propertyId}/${Date.now()}.${fileExt}`;
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("propertyId", propertyId);
 
-          const { error: uploadError } = await supabase.storage
-            .from("property-images")
-            .upload(fileName, file);
+          const res = await fetch("/api/images/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-          if (uploadError) throw uploadError;
+          if (!res.ok) throw new Error("Upload failed");
 
-          const { data: urlData } = supabase.storage
-            .from("property-images")
-            .getPublicUrl(fileName);
-
-          const nextOrder = images.length > 0
-            ? Math.max(...images.map((img) => img.display_order)) + 1
-            : 0;
-
-          const { data: inserted, error: insertError } = await supabase
-            .from("property_images")
-            .insert({
-              property_id: propertyId,
-              storage_path: fileName,
-              url: urlData.publicUrl,
-              display_order: nextOrder,
-            })
-            .select()
-            .single();
-
-          if (insertError) throw insertError;
-
-          setImages((prev) => [...prev, inserted as PropertyImage]);
+          const inserted = await res.json() as PropertyImage;
+          setImages((prev) => [...prev, inserted]);
         }
       } catch (err) {
         console.error("Upload error:", err);
@@ -178,7 +157,7 @@ export function ImageUploader({
         e.target.value = "";
       }
     },
-    [propertyId, images]
+    [propertyId]
   );
 
   const handleDelete = useCallback(
@@ -196,11 +175,11 @@ export function ImageUploader({
   const handleDescriptionSave = useCallback(
     async (imageId: string, descripcion: string) => {
       try {
-        const supabase = createClient();
-        await supabase
-          .from("property_images")
-          .update({ descripcion })
-          .eq("id", imageId);
+        await fetch(`/api/images/${imageId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ descripcion }),
+        });
 
         setImages((prev) =>
           prev.map((img) =>

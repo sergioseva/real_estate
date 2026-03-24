@@ -178,7 +178,7 @@ export function LocationPicker({
       {position && (
         <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin size={12} />
-          Lat: {position[0].toFixed(6)}, Lng: {position[1].toFixed(6)}
+          Lat: {Number(position[0]).toFixed(6)}, Lng: {Number(position[1]).toFixed(6)}
         </p>
       )}
     </div>

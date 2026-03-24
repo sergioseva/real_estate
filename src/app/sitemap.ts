@@ -1,21 +1,17 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { query } from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
-
-  const { data: properties } = await supabase
-    .from("properties")
-    .select("slug, updated_at")
-    .eq("activa", true);
-
-  const propertyUrls =
-    properties?.map((p) => ({
-      url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://matiasperezinmuebles.com"}/propiedades/${p.slug}`,
-      lastModified: new Date(p.updated_at),
-    })) || [];
+  const properties = await query<{ slug: string; updated_at: string }>(
+    "SELECT slug, updated_at FROM properties WHERE activa = true"
+  );
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://matiasperezinmuebles.com";
+
+  const propertyUrls = properties.map((p) => ({
+    url: `${baseUrl}/propiedades/${p.slug}`,
+    lastModified: new Date(p.updated_at),
+  }));
 
   return [
     { url: baseUrl, lastModified: new Date() },

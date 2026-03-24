@@ -1,51 +1,39 @@
-import { createServerClient } from "@supabase/ssr";
+import { jwtVerify } from "jose";
 import { NextResponse, type NextRequest } from "next/server";
 
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
+
+async function verifySession(request: NextRequest): Promise<boolean> {
+  const token = request.cookies.get("session")?.value;
+  if (!token) return false;
+  try {
+    await jwtVerify(token, SECRET);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const authenticated = await verifySession(request);
 
   const isAdminRoute =
     request.nextUrl.pathname.startsWith("/admin") &&
     !request.nextUrl.pathname.startsWith("/admin/login");
 
-  if (isAdminRoute && !user) {
+  if (isAdminRoute && !authenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
   }
 
-  if (request.nextUrl.pathname === "/admin/login" && user) {
+  if (request.nextUrl.pathname === "/admin/login" && authenticated) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {
