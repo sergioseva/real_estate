@@ -1,8 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { query, queryOne, queryCount } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { TasacionRequest } from "@/types";
 
 const tasacionSchema = z.object({
   nombre: z.string().min(2, "El nombre es requerido"),
@@ -26,62 +27,31 @@ export async function createTasacion(formData: FormData) {
     return { error: result.error.flatten().fieldErrors };
   }
 
-  const supabase = await createClient();
-
-  const { error } = await supabase.from("tasacion_requests").insert(result.data);
-
-  if (error) throw error;
+  await queryOne(
+    `INSERT INTO tasacion_requests (nombre, email, telefono, direccion, mensaje) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+    [result.data.nombre, result.data.email, result.data.telefono, result.data.direccion, result.data.mensaje || ""]
+  );
 
   revalidatePath("/admin/tasaciones");
   return { success: true };
 }
 
 export async function getTasaciones() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("tasacion_requests")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
+  return query<TasacionRequest>(
+    "SELECT * FROM tasacion_requests ORDER BY created_at DESC"
+  );
 }
 
 export async function markTasacionRead(id: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("tasacion_requests")
-    .update({ leido: true })
-    .eq("id", id);
-
-  if (error) throw error;
-
+  await query("UPDATE tasacion_requests SET leido = true WHERE id = $1", [id]);
   revalidatePath("/admin/tasaciones");
 }
 
 export async function deleteTasacion(id: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("tasacion_requests")
-    .delete()
-    .eq("id", id);
-
-  if (error) throw error;
-
+  await query("DELETE FROM tasacion_requests WHERE id = $1", [id]);
   revalidatePath("/admin/tasaciones");
 }
 
 export async function getUnreadTasacionCount() {
-  const supabase = await createClient();
-
-  const { count, error } = await supabase
-    .from("tasacion_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("leido", false);
-
-  if (error) return 0;
-  return count || 0;
+  return queryCount("SELECT count(*) FROM tasacion_requests WHERE leido = false");
 }

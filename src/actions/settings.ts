@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { query } from "@/lib/db";
 import type { ContactInfo } from "@/types";
 import { revalidatePath } from "next/cache";
 
@@ -19,38 +19,28 @@ const DEFAULTS: ContactInfo = {
 };
 
 export async function getContactInfo(): Promise<ContactInfo> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("site_settings")
-    .select("key, value")
-    .in("key", CONTACT_KEYS);
+  const rows = await query<{ key: string; value: string }>(
+    "SELECT key, value FROM site_settings WHERE key = ANY($1)",
+    [CONTACT_KEYS]
+  );
 
   const result = { ...DEFAULTS };
-  if (data) {
-    for (const row of data) {
-      if (row.key in result) {
-        result[row.key as keyof ContactInfo] = row.value;
-      }
+  for (const row of rows) {
+    if (row.key in result) {
+      result[row.key as keyof ContactInfo] = row.value;
     }
   }
   return result;
 }
 
 export async function updateContactInfo(formData: FormData) {
-  const supabase = await createClient();
-
-  const updates = CONTACT_KEYS.map((key) => ({
-    key,
-    value: (formData.get(key) as string) || DEFAULTS[key],
-    updated_at: new Date().toISOString(),
-  }));
-
-  const { error } = await supabase
-    .from("site_settings")
-    .upsert(updates, { onConflict: "key" });
-
-  if (error) {
-    return { error: error.message };
+  for (const key of CONTACT_KEYS) {
+    const value = (formData.get(key) as string) || DEFAULTS[key];
+    await query(
+      `INSERT INTO site_settings (key, value, updated_at) VALUES ($1, $2, now())
+       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = now()`,
+      [key, value]
+    );
   }
 
   revalidatePath("/", "layout");

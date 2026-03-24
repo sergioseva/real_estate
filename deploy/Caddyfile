@@ -1,0 +1,14 @@
+{
+    auto_https off
+}
+
+:80 {
+    handle /uploads/* {
+        root * /srv
+        file_server
+    }
+
+    handle {
+        reverse_proxy app:3000
+    }
+}

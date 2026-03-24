@@ -1,183 +1,131 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { query, queryOne, queryCount } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
-import type { Property, PropertyFilters } from "@/types";
+import type { Property, PropertyFilters, PropertyImage } from "@/types";
 import { revalidatePath } from "next/cache";
 
-export async function getProperties(filters: PropertyFilters = {}) {
-  const supabase = await createClient();
-  const page = filters.page || 1;
-  const from = (page - 1) * ITEMS_PER_PAGE;
-  const to = from + ITEMS_PER_PAGE - 1;
+async function attachImages(properties: Property[]): Promise<Property[]> {
+  if (properties.length === 0) return [];
+  const ids = properties.map((p) => p.id);
+  const images = await query<PropertyImage>(
+    `SELECT * FROM property_images WHERE property_id = ANY($1) ORDER BY display_order`,
+    [ids]
+  );
+  const imageMap = new Map<string, PropertyImage[]>();
+  for (const img of images) {
+    const list = imageMap.get(img.property_id) || [];
+    list.push(img);
+    imageMap.set(img.property_id, list);
+  }
+  return properties.map((p) => ({ ...p, images: imageMap.get(p.id) || [] }));
+}
 
-  let query = supabase
-    .from("properties")
-    .select("*, images:property_images(*)", { count: "exact" })
-    .eq("activa", true)
-    .order("created_at", { ascending: false })
-    .range(from, to);
+export async function getProperties(filters: PropertyFilters = {}) {
+  const page = filters.page || 1;
+  const offset = (page - 1) * ITEMS_PER_PAGE;
+
+  const conditions: string[] = ["activa = true"];
+  const params: unknown[] = [];
+  let paramIdx = 1;
 
   if (filters.operacion) {
-    query = query.eq("operacion", filters.operacion);
+    conditions.push(`operacion = $${paramIdx++}`);
+    params.push(filters.operacion);
   }
   if (filters.tipo_propiedad) {
-    query = query.eq("tipo_propiedad", filters.tipo_propiedad);
+    conditions.push(`tipo_propiedad = $${paramIdx++}`);
+    params.push(filters.tipo_propiedad);
   }
   if (filters.ciudad) {
-    query = query.ilike("ciudad", `%${filters.ciudad}%`);
+    conditions.push(`ciudad ILIKE $${paramIdx++}`);
+    params.push(`%${filters.ciudad}%`);
   }
   if (filters.precio_min) {
-    query = query.gte("precio", filters.precio_min);
+    conditions.push(`precio >= $${paramIdx++}`);
+    params.push(filters.precio_min);
   }
   if (filters.precio_max) {
-    query = query.lte("precio", filters.precio_max);
+    conditions.push(`precio <= $${paramIdx++}`);
+    params.push(filters.precio_max);
   }
   if (filters.ambientes) {
-    query = query.gte("ambientes", filters.ambientes);
+    conditions.push(`ambientes >= $${paramIdx++}`);
+    params.push(filters.ambientes);
   }
   if (filters.dormitorios) {
-    query = query.gte("dormitorios", filters.dormitorios);
+    conditions.push(`dormitorios >= $${paramIdx++}`);
+    params.push(filters.dormitorios);
   }
   if (filters.search) {
-    query = query.or(
-      `titulo.ilike.%${filters.search}%,direccion.ilike.%${filters.search}%,ciudad.ilike.%${filters.search}%`
-    );
+    conditions.push(`(titulo ILIKE $${paramIdx} OR direccion ILIKE $${paramIdx} OR ciudad ILIKE $${paramIdx})`);
+    params.push(`%${filters.search}%`);
+    paramIdx++;
   }
 
-  const { data, count, error } = await query;
+  const where = conditions.join(" AND ");
+  const countParams = [...params];
+  const total = await queryCount(`SELECT count(*) FROM properties WHERE ${where}`, countParams);
 
-  if (error) throw error;
+  params.push(ITEMS_PER_PAGE, offset);
+  const properties = await query<Property>(
+    `SELECT * FROM properties WHERE ${where} ORDER BY created_at DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+    params
+  );
+
+  const withImages = await attachImages(properties);
 
   return {
-    properties: (data as (Property & { images: Property["images"] })[]) || [],
-    total: count || 0,
-    totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE),
+    properties: withImages,
+    total,
+    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
     currentPage: page,
   };
 }
 
 export async function getFeaturedProperties() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*, images:property_images(*)")
-    .eq("activa", true)
-    .eq("destacada", true)
-    .order("created_at", { ascending: false })
-    .limit(6);
-
-  if (error) throw error;
-  return (data as Property[]) || [];
+  const properties = await query<Property>(
+    `SELECT * FROM properties WHERE activa = true AND destacada = true ORDER BY created_at DESC LIMIT 6`
+  );
+  return attachImages(properties);
 }
 
 export async function getPropertyBySlug(slug: string) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*, images:property_images(*)")
-    .eq("slug", slug)
-    .eq("activa", true)
-    .single();
-
-  if (error) return null;
-
-  // Sort images by display_order
-  if (data?.images) {
-    data.images.sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order);
-  }
-
-  return data as Property;
+  const property = await queryOne<Property>(
+    `SELECT * FROM properties WHERE slug = $1 AND activa = true`,
+    [slug]
+  );
+  if (!property) return null;
+  const images = await query<PropertyImage>(
+    `SELECT * FROM property_images WHERE property_id = $1 ORDER BY display_order`,
+    [property.id]
+  );
+  return { ...property, images };
 }
 
 export async function getPropertyById(id: string) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*, images:property_images(*)")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-
-  if (data?.images) {
-    data.images.sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order);
-  }
-
-  return data as Property;
+  const property = await queryOne<Property>(
+    `SELECT * FROM properties WHERE id = $1`,
+    [id]
+  );
+  if (!property) return null;
+  const images = await query<PropertyImage>(
+    `SELECT * FROM property_images WHERE property_id = $1 ORDER BY display_order`,
+    [property.id]
+  );
+  return { ...property, images };
 }
 
 export async function getAllProperties() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select("*, images:property_images(*)")
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return (data as Property[]) || [];
+  const properties = await query<Property>(
+    `SELECT * FROM properties ORDER BY created_at DESC`
+  );
+  return attachImages(properties);
 }
 
-export async function createProperty(formData: FormData) {
-  const supabase = await createClient();
-
-  const titulo = formData.get("titulo") as string;
-  const slug = slugify(titulo) + "-" + Date.now().toString(36);
-
-  const propertyData = {
-    titulo,
-    slug,
-    descripcion: formData.get("descripcion") as string,
-    precio: Number(formData.get("precio")),
-    moneda: formData.get("moneda") as string,
-    operacion: formData.get("operacion") as string,
-    tipo_propiedad: formData.get("tipo_propiedad") as string,
-    direccion: formData.get("direccion") as string,
-    ciudad: formData.get("ciudad") as string,
-    provincia: formData.get("provincia") as string,
-    ambientes: Number(formData.get("ambientes")),
-    dormitorios: Number(formData.get("dormitorios")),
-    banos: Number(formData.get("banos")),
-    toilettes: Number(formData.get("toilettes")),
-    cocheras: Number(formData.get("cocheras")),
-    superficie_cubierta: Number(formData.get("superficie_cubierta")),
-    superficie_total: Number(formData.get("superficie_total")),
-    antiguedad: formData.get("antiguedad") as string,
-    antiguedad_anos: Number(formData.get("antiguedad_anos") || 0),
-    expensas: Number(formData.get("expensas") || 0),
-    expensas_moneda: (formData.get("expensas_moneda") as string) || "ARS",
-    apto_credito: formData.get("apto_credito") === "true",
-    latitud: formData.get("latitud") ? Number(formData.get("latitud")) : null,
-    longitud: formData.get("longitud") ? Number(formData.get("longitud")) : null,
-    amenities: JSON.parse((formData.get("amenities") as string) || "[]"),
-    destacada: formData.get("destacada") === "true",
-    activa: formData.get("activa") === "true",
-  };
-
-  const { data, error } = await supabase
-    .from("properties")
-    .insert(propertyData)
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  revalidatePath("/");
-  revalidatePath("/propiedades");
-  revalidatePath("/admin/propiedades");
-
-  return data as Property;
-}
-
-export async function updateProperty(id: string, formData: FormData) {
-  const supabase = await createClient();
-
-  const propertyData = {
+function extractPropertyData(formData: FormData) {
+  return {
     titulo: formData.get("titulo") as string,
     descripcion: formData.get("descripcion") as string,
     precio: Number(formData.get("precio")),
@@ -205,64 +153,53 @@ export async function updateProperty(id: string, formData: FormData) {
     destacada: formData.get("destacada") === "true",
     activa: formData.get("activa") === "true",
   };
+}
 
-  const { error } = await supabase
-    .from("properties")
-    .update(propertyData)
-    .eq("id", id);
+export async function createProperty(formData: FormData) {
+  const d = extractPropertyData(formData);
+  const slug = slugify(d.titulo) + "-" + Date.now().toString(36);
 
-  if (error) throw error;
+  const result = await queryOne<Property>(
+    `INSERT INTO properties (titulo, slug, descripcion, precio, moneda, operacion, tipo_propiedad, direccion, ciudad, provincia, ambientes, dormitorios, banos, toilettes, cocheras, superficie_cubierta, superficie_total, antiguedad, antiguedad_anos, expensas, expensas_moneda, apto_credito, latitud, longitud, amenities, destacada, activa)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+     RETURNING *`,
+    [d.titulo, slug, d.descripcion, d.precio, d.moneda, d.operacion, d.tipo_propiedad, d.direccion, d.ciudad, d.provincia, d.ambientes, d.dormitorios, d.banos, d.toilettes, d.cocheras, d.superficie_cubierta, d.superficie_total, d.antiguedad, d.antiguedad_anos, d.expensas, d.expensas_moneda, d.apto_credito, d.latitud, d.longitud, d.amenities, d.destacada, d.activa]
+  );
 
-  revalidatePath("/");
-  revalidatePath("/propiedades");
-  revalidatePath("/admin/propiedades");
+  revalidatePath("/", "layout");
+  return result as Property;
+}
+
+export async function updateProperty(id: string, formData: FormData) {
+  const d = extractPropertyData(formData);
+
+  await query(
+    `UPDATE properties SET titulo=$1, descripcion=$2, precio=$3, moneda=$4, operacion=$5, tipo_propiedad=$6, direccion=$7, ciudad=$8, provincia=$9, ambientes=$10, dormitorios=$11, banos=$12, toilettes=$13, cocheras=$14, superficie_cubierta=$15, superficie_total=$16, antiguedad=$17, antiguedad_anos=$18, expensas=$19, expensas_moneda=$20, apto_credito=$21, latitud=$22, longitud=$23, amenities=$24, destacada=$25, activa=$26
+     WHERE id=$27`,
+    [d.titulo, d.descripcion, d.precio, d.moneda, d.operacion, d.tipo_propiedad, d.direccion, d.ciudad, d.provincia, d.ambientes, d.dormitorios, d.banos, d.toilettes, d.cocheras, d.superficie_cubierta, d.superficie_total, d.antiguedad, d.antiguedad_anos, d.expensas, d.expensas_moneda, d.apto_credito, d.latitud, d.longitud, d.amenities, d.destacada, d.activa, id]
+  );
+
+  revalidatePath("/", "layout");
 }
 
 export async function deleteProperty(id: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase.from("properties").delete().eq("id", id);
-
-  if (error) throw error;
-
-  revalidatePath("/");
-  revalidatePath("/propiedades");
-  revalidatePath("/admin/propiedades");
+  await query("DELETE FROM properties WHERE id = $1", [id]);
+  revalidatePath("/", "layout");
 }
 
 export async function getPropertyStats() {
-  const supabase = await createClient();
-
-  const [
-    { count: total },
-    { count: activas },
-    { count: venta },
-    { count: alquiler },
-  ] = await Promise.all([
-    supabase.from("properties").select("*", { count: "exact", head: true }),
-    supabase.from("properties").select("*", { count: "exact", head: true }).eq("activa", true),
-    supabase.from("properties").select("*", { count: "exact", head: true }).eq("operacion", "venta").eq("activa", true),
-    supabase.from("properties").select("*", { count: "exact", head: true }).eq("operacion", "alquiler").eq("activa", true),
+  const [total, activas, venta, alquiler] = await Promise.all([
+    queryCount("SELECT count(*) FROM properties"),
+    queryCount("SELECT count(*) FROM properties WHERE activa = true"),
+    queryCount("SELECT count(*) FROM properties WHERE operacion = 'venta' AND activa = true"),
+    queryCount("SELECT count(*) FROM properties WHERE operacion = 'alquiler' AND activa = true"),
   ]);
-
-  return {
-    total: total || 0,
-    activas: activas || 0,
-    venta: venta || 0,
-    alquiler: alquiler || 0,
-  };
+  return { total, activas, venta, alquiler };
 }
 
 export async function getCities() {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select("ciudad")
-    .eq("activa", true);
-
-  if (error) return [];
-
-  const cities = [...new Set((data || []).map((p) => p.ciudad).filter(Boolean))];
-  return cities.sort();
+  const rows = await query<{ ciudad: string }>(
+    "SELECT DISTINCT ciudad FROM properties WHERE activa = true AND ciudad != '' ORDER BY ciudad"
+  );
+  return rows.map((r) => r.ciudad);
 }

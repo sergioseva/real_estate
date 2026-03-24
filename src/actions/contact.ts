@@ -33,6 +33,7 @@ export async function sendContactEmail(formData: FormData) {
   });
 
   if (error) {
+    console.error("Resend error:", error);
     return { error: "No se pudo enviar el mensaje. Intenta de nuevo." };
   }
 
