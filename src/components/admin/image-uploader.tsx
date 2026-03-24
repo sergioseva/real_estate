@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Image from "next/image";
 import { Upload, X, GripVertical, Pencil, Check } from "lucide-react";
 import {
   DndContext,
@@ -56,7 +55,7 @@ function SortableImage({
       className="group relative flex-shrink-0 overflow-hidden rounded-lg border border-border"
     >
       <div className="relative h-32 w-40">
-        <Image src={image.url} alt="" fill className="object-cover" sizes="160px" />
+        <img src={image.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
         <button
           {...attributes}

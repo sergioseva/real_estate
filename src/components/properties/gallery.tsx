@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { PropertyImage } from "@/types";
 
@@ -32,12 +31,10 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
         className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg bg-muted"
         onClick={() => setLightboxOpen(true)}
       >
-        <Image
+        <img
           src={sorted[currentIndex].url}
           alt={`Imagen ${currentIndex + 1}`}
-          fill
-          className="object-cover"
-          priority
+          className="absolute inset-0 h-full w-full object-cover"
         />
         {sorted.length > 1 && (
           <>
@@ -86,12 +83,10 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
                 i === currentIndex ? "border-accent" : "border-transparent"
               }`}
             >
-              <Image
+              <img
                 src={img.url}
                 alt={`Thumbnail ${i + 1}`}
-                fill
-                className="object-cover"
-                sizes="80px"
+                className="absolute inset-0 h-full w-full object-cover"
               />
             </button>
           ))}
@@ -113,12 +108,11 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
           >
             <ChevronLeft size={28} />
           </button>
-          <div className="relative h-[80vh] w-[90vw]">
-            <Image
+          <div className="relative h-[80vh] w-[90vw] flex items-center justify-center">
+            <img
               src={sorted[currentIndex].url}
               alt={`Imagen ${currentIndex + 1}`}
-              fill
-              className="object-contain"
+              className="max-h-full max-w-full object-contain"
             />
           </div>
           <button
