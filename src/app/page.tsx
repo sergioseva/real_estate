@@ -2,6 +2,8 @@ import { HeroSection } from "@/components/home/hero-section";
 import { FeaturedProperties } from "@/components/home/featured-properties";
 import { getFeaturedProperties } from "@/actions/properties";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const featured = await getFeaturedProperties();
 

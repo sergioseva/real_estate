@@ -3,6 +3,8 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { PublicShell } from "@/components/layout/public-shell";
 import { Footer } from "@/components/layout/footer";
+
+export const dynamic = "force-dynamic";
 import { getContactInfo } from "@/actions/settings";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 

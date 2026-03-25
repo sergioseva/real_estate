@@ -3,6 +3,8 @@ import { getContactInfo } from "@/actions/settings";
 import { Phone, Mail, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Contacto",
 };

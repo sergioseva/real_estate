@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, MailOpen, Trash2 } from "lucide-react";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Solicitudes de Tasacion",
 };
