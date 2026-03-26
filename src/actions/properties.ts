@@ -5,6 +5,8 @@ import { slugify } from "@/lib/utils";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import type { Property, PropertyFilters, PropertyImage } from "@/types";
 import { revalidatePath } from "next/cache";
+import { unlink, rmdir } from "fs/promises";
+import { join } from "path";
 
 async function attachImages(properties: Property[]): Promise<Property[]> {
   if (properties.length === 0) return [];
@@ -26,7 +28,7 @@ export async function getProperties(filters: PropertyFilters = {}) {
   const page = filters.page || 1;
   const offset = (page - 1) * ITEMS_PER_PAGE;
 
-  const conditions: string[] = ["activa = true"];
+  const conditions: string[] = ["activa = true", "archivada = false"];
   const params: unknown[] = [];
   let paramIdx = 1;
 
@@ -86,14 +88,14 @@ export async function getProperties(filters: PropertyFilters = {}) {
 
 export async function getFeaturedProperties() {
   const properties = await query<Property>(
-    `SELECT * FROM properties WHERE activa = true AND destacada = true ORDER BY created_at DESC LIMIT 6`
+    `SELECT * FROM properties WHERE activa = true AND archivada = false AND destacada = true ORDER BY created_at DESC LIMIT 6`
   );
   return attachImages(properties);
 }
 
 export async function getPropertyBySlug(slug: string) {
   const property = await queryOne<Property>(
-    `SELECT * FROM properties WHERE slug = $1 AND activa = true`,
+    `SELECT * FROM properties WHERE slug = $1 AND activa = true AND archivada = false`,
     [slug]
   );
   if (!property) return null;
@@ -117,9 +119,12 @@ export async function getPropertyById(id: string) {
   return { ...property, images };
 }
 
-export async function getAllProperties() {
+export async function getAllProperties(filter?: "activas" | "archivadas") {
+  let where = "";
+  if (filter === "archivadas") where = "WHERE archivada = true";
+  else if (filter === "activas") where = "WHERE archivada = false";
   const properties = await query<Property>(
-    `SELECT * FROM properties ORDER BY created_at DESC`
+    `SELECT * FROM properties ${where} ORDER BY created_at DESC`
   );
   return attachImages(properties);
 }
@@ -182,24 +187,60 @@ export async function updateProperty(id: string, formData: FormData) {
   revalidatePath("/", "layout");
 }
 
+export async function archiveProperty(id: string) {
+  await query("UPDATE properties SET archivada = true, fecha_archivada = now() WHERE id = $1", [id]);
+  revalidatePath("/", "layout");
+}
+
+export async function unarchiveProperty(id: string) {
+  await query("UPDATE properties SET archivada = false, fecha_archivada = NULL WHERE id = $1", [id]);
+  revalidatePath("/", "layout");
+}
+
 export async function deleteProperty(id: string) {
+  // Get all images to delete files from disk
+  const images = await query<PropertyImage>(
+    "SELECT * FROM property_images WHERE property_id = $1",
+    [id]
+  );
+
+  // Delete image files from disk
+  for (const img of images) {
+    try {
+      const filePath = join(process.cwd(), "public", img.storage_path);
+      await unlink(filePath);
+    } catch {
+      // File may not exist, continue
+    }
+  }
+
+  // Try to remove the property's upload directory
+  try {
+    const dirPath = join(process.cwd(), "public", "uploads", id);
+    await rmdir(dirPath);
+  } catch {
+    // Directory may not exist or not be empty
+  }
+
+  // Delete property (cascade will remove image records)
   await query("DELETE FROM properties WHERE id = $1", [id]);
   revalidatePath("/", "layout");
 }
 
 export async function getPropertyStats() {
-  const [total, activas, venta, alquiler] = await Promise.all([
-    queryCount("SELECT count(*) FROM properties"),
-    queryCount("SELECT count(*) FROM properties WHERE activa = true"),
-    queryCount("SELECT count(*) FROM properties WHERE operacion = 'venta' AND activa = true"),
-    queryCount("SELECT count(*) FROM properties WHERE operacion = 'alquiler' AND activa = true"),
+  const [total, activas, venta, alquiler, archivadas] = await Promise.all([
+    queryCount("SELECT count(*) FROM properties WHERE archivada = false"),
+    queryCount("SELECT count(*) FROM properties WHERE activa = true AND archivada = false"),
+    queryCount("SELECT count(*) FROM properties WHERE operacion = 'venta' AND activa = true AND archivada = false"),
+    queryCount("SELECT count(*) FROM properties WHERE operacion = 'alquiler' AND activa = true AND archivada = false"),
+    queryCount("SELECT count(*) FROM properties WHERE archivada = true"),
   ]);
-  return { total, activas, venta, alquiler };
+  return { total, activas, venta, alquiler, archivadas };
 }
 
 export async function getCities() {
   const rows = await query<{ ciudad: string }>(
-    "SELECT DISTINCT ciudad FROM properties WHERE activa = true AND ciudad != '' ORDER BY ciudad"
+    "SELECT DISTINCT ciudad FROM properties WHERE activa = true AND archivada = false AND ciudad != '' ORDER BY ciudad"
   );
   return rows.map((r) => r.ciudad);
 }

@@ -1,4 +1,4 @@
-import { Building2, Eye, Tag, Home } from "lucide-react";
+import { Building2, Eye, Tag, Home, Archive } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface Stats {
@@ -6,6 +6,7 @@ interface Stats {
   activas: number;
   venta: number;
   alquiler: number;
+  archivadas: number;
 }
 
 export function StatsCards({ stats }: { stats: Stats }) {
@@ -14,10 +15,11 @@ export function StatsCards({ stats }: { stats: Stats }) {
     { label: "Activas", value: stats.activas, icon: Eye, color: "text-green-600" },
     { label: "En venta", value: stats.venta, icon: Tag, color: "text-purple-600" },
     { label: "En alquiler", value: stats.alquiler, icon: Home, color: "text-orange-600" },
+    { label: "Archivadas", value: stats.archivadas, icon: Archive, color: "text-amber-600" },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
       {cards.map((card) => {
         const Icon = card.icon;
         return (

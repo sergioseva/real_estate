@@ -27,6 +27,9 @@ export interface Property {
   amenities: string[];
   destacada: boolean;
   activa: boolean;
+  archivada: boolean;
+  fecha_alta: string;
+  fecha_archivada: string | null;
   created_at: string;
   updated_at: string;
   images?: PropertyImage[];

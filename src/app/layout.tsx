@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { PublicShell } from "@/components/layout/public-shell";
 import { Footer } from "@/components/layout/footer";
@@ -31,6 +32,14 @@ export default async function RootLayout({
   return (
     <html lang="es" className={`${geist.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
+        {process.env.UMAMI_WEBSITE_ID && process.env.UMAMI_URL && (
+          <Script
+            defer
+            src={process.env.UMAMI_URL + "/script.js"}
+            data-website-id={process.env.UMAMI_WEBSITE_ID}
+            strategy="afterInteractive"
+          />
+        )}
         <PublicShell
           footer={<Footer />}
           whatsappNumber={contactInfo.whatsapp_number}

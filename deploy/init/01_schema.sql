@@ -33,6 +33,9 @@ create table properties (
   amenities text[] not null default '{}',
   destacada boolean not null default false,
   activa boolean not null default true,
+  archivada boolean not null default false,
+  fecha_alta timestamptz not null default now(),
+  fecha_archivada timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -72,6 +75,7 @@ create index idx_properties_operacion on properties(operacion);
 create index idx_properties_activa on properties(activa);
 create index idx_properties_destacada on properties(destacada);
 create index idx_properties_ciudad on properties(ciudad);
+create index idx_properties_archivada on properties(archivada);
 create index idx_property_images_property_id on property_images(property_id);
 create index idx_property_images_order on property_images(property_id, display_order);
 

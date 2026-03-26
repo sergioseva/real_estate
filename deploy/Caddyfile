@@ -12,3 +12,7 @@
         reverse_proxy app:3000
     }
 }
+
+:3100 {
+    reverse_proxy umami:3000
+}

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { Bed, Bath, Home, MapPin, Car, MessageCircle, Ruler, Calendar, BadgeCheck, DoorOpen } from "lucide-react";
+import { Bed, Bath, Home, MapPin, Car, Ruler, Calendar, BadgeCheck, DoorOpen } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
 import { getPropertyBySlug } from "@/actions/properties";
 import { Gallery } from "@/components/properties/gallery";
 import { PropertyMapWrapper } from "@/components/properties/property-map-wrapper";
@@ -215,7 +216,7 @@ export default async function PropertyDetailPage({
               rel="noopener noreferrer"
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-green-500 px-4 py-3 text-sm font-medium text-white hover:bg-green-600 transition-colors"
             >
-              <MessageCircle size={18} />
+              <WhatsAppIcon size={18} />
               Consultar por WhatsApp
             </a>
             <div className="mt-6 border-t border-border pt-4">
