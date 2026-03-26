@@ -1,8 +1,4 @@
-{
-    auto_https off
-}
-
-:80 {
+matiasperezinmuebles.com.ar, www.matiasperezinmuebles.com.ar {
     handle /uploads/* {
         root * /srv
         file_server
