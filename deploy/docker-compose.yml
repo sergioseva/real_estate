@@ -5,7 +5,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "3100:3100"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data

@@ -9,6 +9,6 @@ matiasperezinmuebles.com.ar, www.matiasperezinmuebles.com.ar {
     }
 }
 
-:3100 {
+analytics.matiasperezinmuebles.com.ar {
     reverse_proxy umami:3000
 }
