@@ -3,10 +3,10 @@ import { query } from "@/lib/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const properties = await query<{ slug: string; updated_at: string }>(
-    "SELECT slug, updated_at FROM properties WHERE activa = true"
+    "SELECT slug, updated_at FROM properties WHERE activa = true AND archivada = false"
   );
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://matiasperezinmuebles.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://matiasperezinmuebles.com.ar";
 
   const propertyUrls = properties.map((p) => ({
     url: `${baseUrl}/propiedades/${p.slug}`,
