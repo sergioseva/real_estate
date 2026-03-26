@@ -3,7 +3,8 @@ node_modules
 .git
 .github
 deploy
-supabase
+supabase/*
+!supabase/migrations
 *.md
 .env*
 .dockerignore
