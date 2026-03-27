@@ -8,6 +8,7 @@ import type { PropertyImage } from "@/types";
 
 const MAX_WIDTH = 1920;
 const THUMB_WIDTH = 600;
+const MICRO_WIDTH = 150;
 const QUALITY = 80;
 
 export async function POST(request: NextRequest) {
@@ -27,20 +28,23 @@ export async function POST(request: NextRequest) {
   const timestamp = Date.now();
   const fileName = `${timestamp}.webp`;
   const thumbName = `${timestamp}_thumb.webp`;
+  const microName = `${timestamp}_micro.webp`;
   const dir = join(process.cwd(), "public", "uploads", propertyId);
   await mkdir(dir, { recursive: true });
 
   const bytes = await file.arrayBuffer();
   const source = sharp(Buffer.from(bytes)).rotate();
 
-  const [optimized, thumbnail] = await Promise.all([
+  const [optimized, thumbnail, micro] = await Promise.all([
     source.clone().resize({ width: MAX_WIDTH, withoutEnlargement: true }).webp({ quality: QUALITY }).toBuffer(),
     source.clone().resize({ width: THUMB_WIDTH, withoutEnlargement: true }).webp({ quality: QUALITY }).toBuffer(),
+    source.clone().resize({ width: MICRO_WIDTH, withoutEnlargement: true }).webp({ quality: 70 }).toBuffer(),
   ]);
 
   await Promise.all([
     writeFile(join(dir, fileName), optimized),
     writeFile(join(dir, thumbName), thumbnail),
+    writeFile(join(dir, microName), micro),
   ]);
 
   const storagePath = `/uploads/${propertyId}/${fileName}`;

@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { thumbUrl } from "@/lib/utils";
+import { thumbUrl, microThumbUrl } from "@/lib/utils";
 import type { PropertyImage } from "@/types";
-import { ThumbnailImage } from "@/components/ui/thumbnail-image";
 
 function useImageLoader(urls: string[]) {
   const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
@@ -166,9 +165,21 @@ function GalleryInner({
                 i === currentIndex ? "border-accent" : "border-transparent"
               }`}
             >
-              <ThumbnailImage
-                src={img.url}
+              <img
+                src={microThumbUrl(img.url)}
                 alt={`Thumbnail ${i + 1}`}
+                loading="lazy"
+                decoding="async"
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  if (el.src.includes("_micro")) {
+                    el.onerror = () => { el.onerror = null; el.src = img.url; };
+                    el.src = thumbUrl(img.url);
+                  } else {
+                    el.onerror = null;
+                    el.src = img.url;
+                  }
+                }}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             </button>
