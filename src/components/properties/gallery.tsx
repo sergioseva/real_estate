@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { PropertyImage } from "@/types";
+import { ThumbnailImage } from "@/components/ui/thumbnail-image";
 
 export function Gallery({ images }: { images: PropertyImage[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -83,7 +84,7 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
                 i === currentIndex ? "border-accent" : "border-transparent"
               }`}
             >
-              <img
+              <ThumbnailImage
                 src={img.url}
                 alt={`Thumbnail ${i + 1}`}
                 className="absolute inset-0 h-full w-full object-cover"

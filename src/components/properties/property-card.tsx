@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bed, Home, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ThumbnailImage } from "@/components/ui/thumbnail-image";
 import { formatPrice } from "@/lib/utils";
 import type { Property } from "@/types";
 
@@ -13,7 +14,7 @@ export function PropertyCard({ property }: { property: Property }) {
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {mainImage ? (
-            <img
+            <ThumbnailImage
               src={mainImage.url}
               alt={property.titulo}
               className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"

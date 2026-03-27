@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
+import sharp from "sharp";
 import { queryOne } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import type { PropertyImage } from "@/types";
+
+const MAX_WIDTH = 1920;
+const THUMB_WIDTH = 600;
+const QUALITY = 80;
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -19,14 +24,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing file or propertyId" }, { status: 400 });
   }
 
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${Date.now()}.${fileExt}`;
+  const timestamp = Date.now();
+  const fileName = `${timestamp}.webp`;
+  const thumbName = `${timestamp}_thumb.webp`;
   const dir = join(process.cwd(), "public", "uploads", propertyId);
   await mkdir(dir, { recursive: true });
 
   const bytes = await file.arrayBuffer();
-  const filePath = join(dir, fileName);
-  await writeFile(filePath, Buffer.from(bytes));
+  const source = sharp(Buffer.from(bytes)).rotate();
+
+  const [optimized, thumbnail] = await Promise.all([
+    source.clone().resize({ width: MAX_WIDTH, withoutEnlargement: true }).webp({ quality: QUALITY }).toBuffer(),
+    source.clone().resize({ width: THUMB_WIDTH, withoutEnlargement: true }).webp({ quality: QUALITY }).toBuffer(),
+  ]);
+
+  await Promise.all([
+    writeFile(join(dir, fileName), optimized),
+    writeFile(join(dir, thumbName), thumbnail),
+  ]);
 
   const storagePath = `/uploads/${propertyId}/${fileName}`;
 

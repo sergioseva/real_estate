@@ -1,0 +1,43 @@
+services:
+  caddy:
+    image: caddy:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./deploy/Caddyfile.local:/etc/caddy/Caddyfile
+      - ./public/uploads:/srv/uploads
+    depends_on:
+      - app
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/real_estate
+      JWT_SECRET: local-dev-secret-at-least-256-bits-long-string
+      RESEND_API_KEY: re_placeholder
+      RESEND_FROM_EMAIL: noreply@localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./public/uploads:/app/public/uploads
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: real_estate
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+      - ./deploy/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata_dev:

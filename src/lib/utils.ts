@@ -33,6 +33,12 @@ export function formatDate(dateStr: string): string {
   });
 }
 
+export function thumbUrl(url: string): string {
+  const dot = url.lastIndexOf(".");
+  if (dot === -1) return url;
+  return `${url.substring(0, dot)}_thumb${url.substring(dot)}`;
+}
+
 export function buildWhatsAppUrl(
   phone: string,
   message: string

@@ -57,11 +57,16 @@ All data mutations and queries go through Server Actions:
 ### Auth & Middleware
 `src/middleware.ts` protects all `/admin/*` routes using JWT verification via `jose` (edge-compatible). Unauthenticated users redirect to `/admin/login`. Already-authenticated users on `/admin/login` redirect to `/admin/dashboard`.
 
-### Database Schema
-Consolidated in `deploy/init/01_schema.sql`. Tables: `properties`, `property_images`, `tasacion_requests`, `site_settings`, `admin_users`. Default admin user seeded in `deploy/init/02_admin_user.sql`.
+### Database Schema & Migrations
+Initial schema in `deploy/init/01_schema.sql`. Tables: `properties`, `property_images`, `tasacion_requests`, `site_settings`, `admin_users`. Default admin user seeded in `deploy/init/02_admin_user.sql`.
+
+Incremental migrations live in `supabase/migrations/` (numbered `001_*.sql`, `002_*.sql`, etc.). They run automatically on app startup via `src/lib/migrate.ts`, tracked in `schema_migrations` table. For existing databases, baseline migrations (001–005) are auto-marked as applied. To add a new migration, create the next numbered `.sql` file in that directory.
 
 ### Image Storage
 Property images are stored on local disk at `public/uploads/{propertyId}/{timestamp}.{ext}`. Served by Caddy directly from the uploads volume in production. The `image-uploader.tsx` client component uploads via `fetch("/api/images/upload")`.
+
+### SEO
+Dynamic sitemap (`src/app/sitemap.ts`) includes static pages + all active properties. `robots.ts` disallows `/admin/`.
 
 ### Key Patterns
 - All DB-dependent pages use `export const dynamic = "force-dynamic"` (required for standalone Docker deployment)

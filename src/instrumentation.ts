@@ -3,9 +3,12 @@ export async function onRequestInit() {
 }
 
 export async function register() {
-  // Run migrations on server startup (Node.js runtime only)
+  // Run migrations and one-time tasks on server startup (Node.js runtime only)
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { runMigrations } = await import("@/lib/migrate");
     await runMigrations();
+
+    const { runTasks } = await import("@/lib/tasks");
+    await runTasks();
   }
 }
