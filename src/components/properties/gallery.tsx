@@ -1,9 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { thumbUrl } from "@/lib/utils";
 import type { PropertyImage } from "@/types";
 import { ThumbnailImage } from "@/components/ui/thumbnail-image";
+
+function useImageLoader(urls: string[]) {
+  const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
+
+  const preload = useCallback((url: string) => {
+    if (loaded.has(url)) return;
+    const img = new Image();
+    img.src = url;
+    img.onload = () => setLoaded((prev) => new Set(prev).add(url));
+  }, [loaded]);
+
+  return { loaded, preload };
+}
 
 export function Gallery({ images }: { images: PropertyImage[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -19,11 +33,65 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
 
   const sorted = [...images].sort((a, b) => a.display_order - b.display_order);
 
-  const goTo = (index: number) => {
-    if (index < 0) setCurrentIndex(sorted.length - 1);
-    else if (index >= sorted.length) setCurrentIndex(0);
-    else setCurrentIndex(index);
-  };
+  return (
+    <GalleryInner
+      sorted={sorted}
+      currentIndex={currentIndex}
+      setCurrentIndex={setCurrentIndex}
+      lightboxOpen={lightboxOpen}
+      setLightboxOpen={setLightboxOpen}
+    />
+  );
+}
+
+function GalleryInner({
+  sorted,
+  currentIndex,
+  setCurrentIndex,
+  lightboxOpen,
+  setLightboxOpen,
+}: {
+  sorted: PropertyImage[];
+  currentIndex: number;
+  setCurrentIndex: (i: number) => void;
+  lightboxOpen: boolean;
+  setLightboxOpen: (open: boolean) => void;
+}) {
+  const { loaded, preload } = useImageLoader(sorted.map((img) => img.url));
+
+  const goTo = useCallback(
+    (index: number) => {
+      if (index < 0) setCurrentIndex(sorted.length - 1);
+      else if (index >= sorted.length) setCurrentIndex(0);
+      else setCurrentIndex(index);
+    },
+    [sorted.length, setCurrentIndex]
+  );
+
+  // Preload current full image + adjacent
+  useEffect(() => {
+    preload(sorted[currentIndex].url);
+    if (sorted.length > 1) {
+      const next = (currentIndex + 1) % sorted.length;
+      const prev = (currentIndex - 1 + sorted.length) % sorted.length;
+      preload(sorted[next].url);
+      preload(sorted[prev].url);
+    }
+  }, [currentIndex, sorted, preload]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") goTo(currentIndex - 1);
+      else if (e.key === "ArrowRight") goTo(currentIndex + 1);
+      else if (e.key === "Escape" && lightboxOpen) setLightboxOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [currentIndex, lightboxOpen, goTo, setLightboxOpen]);
+
+  const current = sorted[currentIndex];
+  const fullLoaded = loaded.has(current.url);
 
   return (
     <>
@@ -32,11 +100,25 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
         className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg bg-muted"
         onClick={() => setLightboxOpen(true)}
       >
+        {/* Thumb shown immediately, hidden once full loads */}
         <img
-          src={sorted[currentIndex].url}
+          src={thumbUrl(current.url)}
           alt={`Imagen ${currentIndex + 1}`}
-          className="absolute inset-0 h-full w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = current.url;
+          }}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity ${fullLoaded ? "opacity-0" : "opacity-100"}`}
         />
+        {/* Full image on top */}
+        {fullLoaded && (
+          <img
+            src={current.url}
+            alt={`Imagen ${currentIndex + 1}`}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+
         {sorted.length > 1 && (
           <>
             <button
@@ -60,9 +142,9 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
           </>
         )}
         <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-3 pb-2">
-          {sorted[currentIndex].descripcion ? (
+          {current.descripcion ? (
             <span className="rounded-md bg-black/60 px-3 py-1.5 text-sm text-white">
-              {sorted[currentIndex].descripcion}
+              {current.descripcion}
             </span>
           ) : (
             <span />
