@@ -10,10 +10,12 @@ export const metadata: Metadata = {
 
 export default async function EditarPropiedadPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnUrl?: string }>;
 }) {
-  const { id } = await params;
+  const [{ id }, { returnUrl }] = await Promise.all([params, searchParams]);
   const property = await getPropertyById(id);
 
   if (!property) notFound();
@@ -28,7 +30,7 @@ export default async function EditarPropiedadPage({
           propertyId={property.id}
           initialImages={property.images || []}
         />
-        <PropertyForm property={property} />
+        <PropertyForm property={property} returnUrl={returnUrl} />
       </div>
     </div>
   );

@@ -55,6 +55,12 @@ export default async function AdminPropiedadesPage({
 
   const { properties, total, totalPages, currentPage, pageSize } = result;
 
+  const currentQs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) currentQs.set(key, value);
+  }
+  const returnUrl = `/admin/propiedades${currentQs.size ? `?${currentQs.toString()}` : ""}`;
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -114,7 +120,7 @@ export default async function AdminPropiedadesPage({
               <div className="flex shrink-0 items-center gap-2">
                 {!showArchived && (
                   <Link
-                    href={`/admin/propiedades/${property.id}/editar`}
+                    href={`/admin/propiedades/${property.id}/editar?returnUrl=${encodeURIComponent(returnUrl)}`}
                     className="text-accent hover:text-accent-light"
                     title="Editar"
                   >
@@ -219,7 +225,7 @@ export default async function AdminPropiedadesPage({
                   <div className="flex items-center justify-center gap-2">
                     {!showArchived && (
                       <Link
-                        href={`/admin/propiedades/${property.id}/editar`}
+                        href={`/admin/propiedades/${property.id}/editar?returnUrl=${encodeURIComponent(returnUrl)}`}
                         className="text-accent hover:text-accent-light"
                         title="Editar"
                       >

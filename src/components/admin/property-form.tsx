@@ -16,7 +16,7 @@ const LocationPicker = dynamic(
   { ssr: false, loading: () => <div className="h-[400px] rounded-lg border border-border bg-muted animate-pulse" /> }
 );
 
-export function PropertyForm({ property }: { property?: Property }) {
+export function PropertyForm({ property, returnUrl }: { property?: Property; returnUrl?: string }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export function PropertyForm({ property }: { property?: Property }) {
 
       if (isEditing) {
         await updateProperty(property.id, formData);
-        router.push("/admin/dashboard");
+        router.push(returnUrl || "/admin/propiedades");
       } else {
         const created = await createProperty(formData);
         router.push(`/admin/propiedades/${created.id}/editar`);
@@ -352,7 +352,7 @@ export function PropertyForm({ property }: { property?: Property }) {
           type="button"
           variant="outline"
           size="lg"
-          onClick={() => router.push("/admin/propiedades")}
+          onClick={() => router.push(returnUrl || "/admin/propiedades")}
         >
           Cancelar
         </Button>
