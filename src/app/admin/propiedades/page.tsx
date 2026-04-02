@@ -116,7 +116,11 @@ export default async function AdminPropiedadesPage({
         {properties.map((property) => (
           <div key={property.id} className="rounded-lg border border-border bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-medium text-sm leading-tight">{property.titulo}</h3>
+              <h3 className="font-medium text-sm leading-tight">
+                <Link href={`/admin/propiedades/${property.id}/editar?returnUrl=${encodeURIComponent(returnUrl)}`} className="hover:text-accent">
+                  {property.titulo}
+                </Link>
+              </h3>
               <div className="flex shrink-0 items-center gap-2">
                 {!showArchived && (
                   <Link
@@ -193,7 +197,11 @@ export default async function AdminPropiedadesPage({
           <tbody className="divide-y divide-border">
             {properties.map((property) => (
               <tr key={property.id} className="hover:bg-muted/50">
-                <td className="px-4 py-3 font-medium">{property.titulo}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link href={`/admin/propiedades/${property.id}/editar?returnUrl=${encodeURIComponent(returnUrl)}`} className="hover:text-accent">
+                    {property.titulo}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">
                   <Badge variant={property.operacion === "venta" ? "default" : "accent"}>
                     {property.operacion}
