@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Plus, Edit, Eye, EyeOff, Archive } from "lucide-react";
-import { getAllProperties } from "@/actions/properties";
+import { getAdminProperties, getAdminCities } from "@/actions/properties";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArchiveButton, UnarchiveButton, DeleteButton } from "@/components/admin/property-actions";
+import { AdminPropertyFilters } from "@/components/admin/property-filters";
+import { SortableHeader } from "@/components/admin/sortable-header";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { formatPrice, formatDate } from "@/lib/utils";
+import { ADMIN_ITEMS_PER_PAGE } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -16,12 +21,37 @@ export const metadata: Metadata = {
 export default async function AdminPropiedadesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filtro?: string }>;
+  searchParams: Promise<{
+    filtro?: string;
+    busqueda?: string;
+    operacion?: string;
+    ciudad?: string;
+    orden?: string;
+    dir?: string;
+    pagina?: string;
+    cantidad?: string;
+  }>;
 }) {
-  const { filtro } = await searchParams;
-  const showArchived = filtro === "archivadas";
-  const filter = showArchived ? "archivadas" : "activas";
-  const properties = await getAllProperties(filter);
+  const params = await searchParams;
+  const showArchived = params.filtro === "archivadas";
+  const orden = params.orden || "fecha_alta";
+  const dir = (params.dir === "asc" ? "asc" : "desc") as "asc" | "desc";
+
+  const [result, cities] = await Promise.all([
+    getAdminProperties({
+      filtro: showArchived ? "archivadas" : "activas",
+      busqueda: params.busqueda,
+      operacion: params.operacion,
+      ciudad: params.ciudad,
+      orden,
+      dir,
+      pagina: params.pagina ? Number(params.pagina) : 1,
+      cantidad: params.cantidad ? Number(params.cantidad) : ADMIN_ITEMS_PER_PAGE,
+    }),
+    getAdminCities(),
+  ]);
+
+  const { properties, total, totalPages, currentPage, pageSize } = result;
 
   return (
     <div>
@@ -29,7 +59,7 @@ export default async function AdminPropiedadesPage({
         <div>
           <h1 className="text-2xl font-bold text-primary">Propiedades</h1>
           <p className="text-muted-foreground">
-            {properties.length} propiedad{properties.length !== 1 ? "es" : ""}
+            {total} propiedad{total !== 1 ? "es" : ""}
             {showArchived ? " archivadas" : ""}
           </p>
         </div>
@@ -64,6 +94,13 @@ export default async function AdminPropiedadesPage({
           <Archive size={14} />
           Archivadas
         </Link>
+      </div>
+
+      {/* Filters */}
+      <div className="mt-4">
+        <Suspense>
+          <AdminPropertyFilters cities={cities} />
+        </Suspense>
       </div>
 
       {/* Mobile: card layout */}
@@ -132,13 +169,15 @@ export default async function AdminPropiedadesPage({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-muted">
             <tr>
-              <th className="px-4 py-3 font-medium">Titulo</th>
-              <th className="px-4 py-3 font-medium">Operacion</th>
-              <th className="px-4 py-3 font-medium">Precio</th>
-              <th className="px-4 py-3 font-medium">Ciudad</th>
-              <th className="px-4 py-3 font-medium">Estado</th>
-              <th className="px-4 py-3 font-medium">Fecha alta</th>
-              {showArchived && <th className="px-4 py-3 font-medium">Fecha archivada</th>}
+              <SortableHeader column="titulo" label="Titulo" currentSort={orden} currentDir={dir} />
+              <SortableHeader column="operacion" label="Operacion" currentSort={orden} currentDir={dir} />
+              <SortableHeader column="precio" label="Precio" currentSort={orden} currentDir={dir} />
+              <SortableHeader column="ciudad" label="Ciudad" currentSort={orden} currentDir={dir} />
+              <SortableHeader column="estado" label="Estado" currentSort={orden} currentDir={dir} />
+              <SortableHeader column="fecha_alta" label="Fecha alta" currentSort={orden} currentDir={dir} />
+              {showArchived && (
+                <SortableHeader column="fecha_archivada" label="Fecha archivada" currentSort={orden} currentDir={dir} />
+              )}
               <th className="px-4 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
@@ -215,6 +254,16 @@ export default async function AdminPropiedadesPage({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      <Suspense>
+        <AdminPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          total={total}
+        />
+      </Suspense>
     </div>
   );
 }

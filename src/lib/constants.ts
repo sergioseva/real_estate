@@ -54,6 +54,19 @@ export const ANTIGUEDADES = [
 
 export const ITEMS_PER_PAGE = 12;
 
+export const ADMIN_ITEMS_PER_PAGE = 50;
+export const ADMIN_PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
+
+export const ADMIN_SORTABLE_COLUMNS: Record<string, string> = {
+  titulo: "titulo",
+  operacion: "operacion",
+  precio: "precio",
+  ciudad: "ciudad",
+  estado: "activa",
+  fecha_alta: "fecha_alta",
+  fecha_archivada: "fecha_archivada",
+};
+
 export const SITE_NAME = "Matias Perez Inmuebles";
 export const SITE_DESCRIPTION =
   "Encontrá tu próximo hogar. Propiedades en venta y alquiler.";

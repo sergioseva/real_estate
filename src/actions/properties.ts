@@ -2,7 +2,7 @@
 
 import { query, queryOne, queryCount } from "@/lib/db";
 import { slugify } from "@/lib/utils";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { ITEMS_PER_PAGE, ADMIN_ITEMS_PER_PAGE, ADMIN_SORTABLE_COLUMNS } from "@/lib/constants";
 import type { Property, PropertyFilters, PropertyImage } from "@/types";
 import { revalidatePath } from "next/cache";
 import { unlink, rmdir } from "fs/promises";
@@ -127,6 +127,74 @@ export async function getAllProperties(filter?: "activas" | "archivadas") {
     `SELECT * FROM properties ${where} ORDER BY created_at DESC`
   );
   return attachImages(properties);
+}
+
+export async function getAdminProperties(filters: {
+  filtro?: "activas" | "archivadas";
+  busqueda?: string;
+  operacion?: string;
+  ciudad?: string;
+  orden?: string;
+  dir?: "asc" | "desc";
+  pagina?: number;
+  cantidad?: number;
+} = {}) {
+  const pageSize = filters.cantidad || ADMIN_ITEMS_PER_PAGE;
+  const page = filters.pagina || 1;
+  const offset = (page - 1) * pageSize;
+
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let paramIdx = 1;
+
+  if (filters.filtro === "archivadas") {
+    conditions.push("archivada = true");
+  } else {
+    conditions.push("archivada = false");
+  }
+
+  if (filters.busqueda) {
+    conditions.push(`titulo ILIKE $${paramIdx++}`);
+    params.push(`%${filters.busqueda}%`);
+  }
+
+  if (filters.operacion) {
+    conditions.push(`operacion = $${paramIdx++}`);
+    params.push(filters.operacion);
+  }
+
+  if (filters.ciudad) {
+    conditions.push(`ciudad ILIKE $${paramIdx++}`);
+    params.push(`%${filters.ciudad}%`);
+  }
+
+  const where = conditions.join(" AND ");
+  const countParams = [...params];
+  const total = await queryCount(`SELECT count(*) FROM properties WHERE ${where}`, countParams);
+
+  const sortCol = ADMIN_SORTABLE_COLUMNS[filters.orden || "fecha_alta"] || "fecha_alta";
+  const sortDir = filters.dir === "asc" ? "ASC" : "DESC";
+
+  params.push(pageSize, offset);
+  const properties = await query<Property>(
+    `SELECT * FROM properties WHERE ${where} ORDER BY ${sortCol} ${sortDir} LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+    params
+  );
+
+  return {
+    properties,
+    total,
+    totalPages: Math.ceil(total / pageSize),
+    currentPage: page,
+    pageSize,
+  };
+}
+
+export async function getAdminCities() {
+  const rows = await query<{ ciudad: string }>(
+    "SELECT DISTINCT ciudad FROM properties WHERE ciudad != '' ORDER BY ciudad"
+  );
+  return rows.map((r) => r.ciudad);
 }
 
 function extractPropertyData(formData: FormData) {
