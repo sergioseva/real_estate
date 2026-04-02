@@ -133,6 +133,7 @@ export async function getAdminProperties(filters: {
   filtro?: "activas" | "archivadas";
   busqueda?: string;
   operacion?: string;
+  tipo_propiedad?: string;
   ciudad?: string;
   orden?: string;
   dir?: "asc" | "desc";
@@ -163,6 +164,11 @@ export async function getAdminProperties(filters: {
     params.push(filters.operacion);
   }
 
+  if (filters.tipo_propiedad) {
+    conditions.push(`tipo_propiedad = $${paramIdx++}`);
+    params.push(filters.tipo_propiedad);
+  }
+
   if (filters.ciudad) {
     conditions.push(`ciudad ILIKE $${paramIdx++}`);
     params.push(`%${filters.ciudad}%`);
@@ -188,6 +194,11 @@ export async function getAdminProperties(filters: {
     currentPage: page,
     pageSize,
   };
+}
+
+export async function togglePropertyActive(id: string, activa: boolean) {
+  await query("UPDATE properties SET activa = $1 WHERE id = $2", [activa, id]);
+  revalidatePath("/", "layout");
 }
 
 export async function getAdminCities() {

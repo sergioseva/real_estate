@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Edit, Eye, EyeOff, Archive } from "lucide-react";
+import { Plus, Edit, Archive } from "lucide-react";
 import { getAdminProperties, getAdminCities } from "@/actions/properties";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArchiveButton, UnarchiveButton, DeleteButton } from "@/components/admin/property-actions";
+import { ArchiveButton, UnarchiveButton, DeleteButton, ActiveToggle } from "@/components/admin/property-actions";
 import { AdminPropertyFilters } from "@/components/admin/property-filters";
 import { SortableHeader } from "@/components/admin/sortable-header";
 import { AdminPagination } from "@/components/admin/admin-pagination";
@@ -25,6 +25,7 @@ export default async function AdminPropiedadesPage({
     filtro?: string;
     busqueda?: string;
     operacion?: string;
+    tipo_propiedad?: string;
     ciudad?: string;
     orden?: string;
     dir?: string;
@@ -42,6 +43,7 @@ export default async function AdminPropiedadesPage({
       filtro: showArchived ? "archivadas" : "activas",
       busqueda: params.busqueda,
       operacion: params.operacion,
+      tipo_propiedad: params.tipo_propiedad,
       ciudad: params.ciudad,
       orden,
       dir,
@@ -109,28 +111,36 @@ export default async function AdminPropiedadesPage({
           <div key={property.id} className="rounded-lg border border-border bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-medium text-sm leading-tight">{property.titulo}</h3>
-              {!showArchived && (
-                <Link
-                  href={`/admin/propiedades/${property.id}/editar`}
-                  className="shrink-0 inline-flex items-center gap-1 text-accent hover:text-accent-light text-sm"
-                >
-                  <Edit size={14} />
-                  Editar
-                </Link>
-              )}
+              <div className="flex shrink-0 items-center gap-2">
+                {!showArchived && (
+                  <Link
+                    href={`/admin/propiedades/${property.id}/editar`}
+                    className="text-accent hover:text-accent-light"
+                    title="Editar"
+                  >
+                    <Edit size={16} />
+                  </Link>
+                )}
+                {showArchived ? (
+                  <>
+                    <UnarchiveButton propertyId={property.id} />
+                    <DeleteButton propertyId={property.id} propertyTitle={property.titulo} />
+                  </>
+                ) : (
+                  <ArchiveButton propertyId={property.id} />
+                )}
+              </div>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <Badge variant={property.operacion === "venta" ? "default" : "accent"}>
                 {property.operacion}
               </Badge>
-              {property.activa ? (
-                <span className="flex items-center gap-1 text-green-600 text-xs">
-                  <Eye size={12} /> Activa
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-muted-foreground text-xs">
-                  <EyeOff size={12} /> Inactiva
-                </span>
+              <span className="text-xs text-muted-foreground">{property.tipo_propiedad}</span>
+              {!showArchived && (
+                <label className="flex items-center gap-1 text-xs">
+                  <ActiveToggle propertyId={property.id} activa={property.activa} />
+                  Activa
+                </label>
               )}
             </div>
             <div className="mt-2 flex items-center justify-between text-sm">
@@ -141,16 +151,6 @@ export default async function AdminPropiedadesPage({
               Alta: {formatDate(property.fecha_alta)}
               {showArchived && property.fecha_archivada && (
                 <> · Archivada: {formatDate(property.fecha_archivada)}</>
-              )}
-            </div>
-            <div className="mt-3 flex items-center gap-3 border-t border-border pt-3">
-              {showArchived ? (
-                <>
-                  <UnarchiveButton propertyId={property.id} />
-                  <DeleteButton propertyId={property.id} propertyTitle={property.titulo} />
-                </>
-              ) : (
-                <ArchiveButton propertyId={property.id} />
               )}
             </div>
           </div>
@@ -171,14 +171,17 @@ export default async function AdminPropiedadesPage({
             <tr>
               <SortableHeader column="titulo" label="Titulo" currentSort={orden} currentDir={dir} />
               <SortableHeader column="operacion" label="Operacion" currentSort={orden} currentDir={dir} />
+              <SortableHeader column="tipo" label="Tipo" currentSort={orden} currentDir={dir} />
               <SortableHeader column="precio" label="Precio" currentSort={orden} currentDir={dir} />
               <SortableHeader column="ciudad" label="Ciudad" currentSort={orden} currentDir={dir} />
-              <SortableHeader column="estado" label="Estado" currentSort={orden} currentDir={dir} />
+              {!showArchived && (
+                <SortableHeader column="activa" label="Activa" currentSort={orden} currentDir={dir} />
+              )}
               <SortableHeader column="fecha_alta" label="Fecha alta" currentSort={orden} currentDir={dir} />
               {showArchived && (
                 <SortableHeader column="fecha_archivada" label="Fecha archivada" currentSort={orden} currentDir={dir} />
               )}
-              <th className="px-4 py-3 font-medium">Acciones</th>
+              <th className="px-3 py-3 font-medium text-center">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -186,31 +189,24 @@ export default async function AdminPropiedadesPage({
               <tr key={property.id} className="hover:bg-muted/50">
                 <td className="px-4 py-3 font-medium">{property.titulo}</td>
                 <td className="px-4 py-3">
-                  <Badge
-                    variant={
-                      property.operacion === "venta" ? "default" : "accent"
-                    }
-                  >
+                  <Badge variant={property.operacion === "venta" ? "default" : "accent"}>
                     {property.operacion}
                   </Badge>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                  {property.tipo_propiedad}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
                   {formatPrice(property.precio, property.moneda)}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {property.ciudad}
                 </td>
-                <td className="px-4 py-3">
-                  {property.activa ? (
-                    <span className="flex items-center gap-1 text-green-600">
-                      <Eye size={14} /> Activa
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <EyeOff size={14} /> Inactiva
-                    </span>
-                  )}
-                </td>
+                {!showArchived && (
+                  <td className="px-4 py-3 text-center">
+                    <ActiveToggle propertyId={property.id} activa={property.activa} />
+                  </td>
+                )}
                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                   {formatDate(property.fecha_alta)}
                 </td>
@@ -219,15 +215,15 @@ export default async function AdminPropiedadesPage({
                     {property.fecha_archivada ? formatDate(property.fecha_archivada) : "—"}
                   </td>
                 )}
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
+                <td className="px-3 py-3">
+                  <div className="flex items-center justify-center gap-2">
                     {!showArchived && (
                       <Link
                         href={`/admin/propiedades/${property.id}/editar`}
-                        className="inline-flex items-center gap-1 text-accent hover:text-accent-light"
+                        className="text-accent hover:text-accent-light"
+                        title="Editar"
                       >
-                        <Edit size={14} />
-                        Editar
+                        <Edit size={16} />
                       </Link>
                     )}
                     {showArchived ? (
@@ -244,7 +240,7 @@ export default async function AdminPropiedadesPage({
             ))}
             {properties.length === 0 && (
               <tr>
-                <td colSpan={showArchived ? 8 : 7} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={showArchived ? 8 : 8} className="px-4 py-8 text-center text-muted-foreground">
                   {showArchived
                     ? "No hay propiedades archivadas."
                     : "No hay propiedades. Crea la primera."}

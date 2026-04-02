@@ -60,9 +60,10 @@ export const ADMIN_PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 export const ADMIN_SORTABLE_COLUMNS: Record<string, string> = {
   titulo: "titulo",
   operacion: "operacion",
+  tipo: "tipo_propiedad",
   precio: "precio",
   ciudad: "ciudad",
-  estado: "activa",
+  activa: "activa",
   fecha_alta: "fecha_alta",
   fecha_archivada: "fecha_archivada",
 };

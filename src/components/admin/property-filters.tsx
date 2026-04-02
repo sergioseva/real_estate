@@ -5,7 +5,7 @@ import { useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { OPERACIONES } from "@/lib/constants";
+import { OPERACIONES, TIPOS_PROPIEDAD } from "@/lib/constants";
 
 export function AdminPropertyFilters({ cities }: { cities: string[] }) {
   const router = useRouter();
@@ -55,7 +55,7 @@ export function AdminPropertyFilters({ cities }: { cities: string[] }) {
 
   return (
     <form key={searchParams.toString()} ref={formRef} onSubmit={handleSubmit} className="rounded-lg border border-border bg-white p-4 shadow-sm">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <Input
           name="busqueda"
           placeholder="Buscar por titulo (Enter)..."
@@ -69,13 +69,20 @@ export function AdminPropertyFilters({ cities }: { cities: string[] }) {
           onChange={navigate}
         />
         <Select
+          name="tipo_propiedad"
+          placeholder="Tipo"
+          defaultValue={searchParams.get("tipo_propiedad") || ""}
+          options={TIPOS_PROPIEDAD.map((t) => ({ value: t, label: t }))}
+          onChange={navigate}
+        />
+        <Select
           name="ciudad"
           placeholder="Ciudad"
           defaultValue={searchParams.get("ciudad") || ""}
           options={cities.map((c) => ({ value: c, label: c }))}
           onChange={navigate}
         />
-        <Button type="button" variant="outline" onClick={handleReset}>
+        <Button type="button" variant="outline" onClick={handleReset} className="sm:col-span-2 lg:col-span-2">
           Limpiar filtros
         </Button>
       </div>
