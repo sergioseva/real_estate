@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { getPropertyById } from "@/actions/properties";
 import { PropertyForm } from "@/components/admin/property-form";
 import { ImageUploader } from "@/components/admin/image-uploader";
@@ -22,6 +24,13 @@ export default async function EditarPropiedadPage({
 
   return (
     <div>
+      <Link
+        href={returnUrl || "/admin/propiedades"}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
+      >
+        <ArrowLeft size={16} />
+        Volver a propiedades
+      </Link>
       <h1 className="text-2xl font-bold text-primary">Editar propiedad</h1>
       <p className="text-muted-foreground">{property.titulo}</p>
 

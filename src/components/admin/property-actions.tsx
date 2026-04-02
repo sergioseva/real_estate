@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
-import { archiveProperty, unarchiveProperty, deleteProperty, togglePropertyActive } from "@/actions/properties";
+import { archiveProperty, unarchiveProperty, deleteProperty, togglePropertyActive, togglePropertyVendida } from "@/actions/properties";
 
 export function ArchiveButton({ propertyId }: { propertyId: string }) {
   const router = useRouter();
@@ -117,6 +117,38 @@ export function ActiveToggle({ propertyId, activa }: { propertyId: string; activ
       disabled={loading}
       className="h-4 w-4 cursor-pointer rounded border-border text-accent focus:ring-accent disabled:opacity-50"
       title={optimistic ? "Desactivar" : "Activar"}
+    />
+  );
+}
+
+export function VendidaToggle({ propertyId, vendida, operacion }: { propertyId: string; vendida: boolean; operacion: "venta" | "alquiler" }) {
+  const [optimistic, setOptimistic] = useState(vendida);
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = async () => {
+    const newValue = !optimistic;
+    setOptimistic(newValue);
+    setLoading(true);
+    try {
+      await togglePropertyVendida(propertyId, newValue);
+    } catch {
+      setOptimistic(!newValue);
+      alert("Error al cambiar el estado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <input
+      type="checkbox"
+      checked={optimistic}
+      onChange={handleToggle}
+      disabled={loading}
+      className="h-4 w-4 cursor-pointer rounded border-border text-accent focus:ring-accent disabled:opacity-50"
+      title={optimistic
+        ? `Quitar ${operacion === "alquiler" ? "alquilada" : "vendida"}`
+        : `Marcar como ${operacion === "alquiler" ? "alquilada" : "vendida"}`}
     />
   );
 }

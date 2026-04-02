@@ -28,6 +28,7 @@ export interface Property {
   destacada: boolean;
   activa: boolean;
   archivada: boolean;
+  vendida: boolean;
   fecha_alta: string;
   fecha_archivada: string | null;
   created_at: string;

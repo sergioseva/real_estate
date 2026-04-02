@@ -201,6 +201,11 @@ export async function togglePropertyActive(id: string, activa: boolean) {
   revalidatePath("/", "layout");
 }
 
+export async function togglePropertyVendida(id: string, vendida: boolean) {
+  await query("UPDATE properties SET vendida = $1 WHERE id = $2", [vendida, id]);
+  revalidatePath("/", "layout");
+}
+
 export async function getAdminCities() {
   const rows = await query<{ ciudad: string }>(
     "SELECT DISTINCT ciudad FROM properties WHERE ciudad != '' ORDER BY ciudad"
@@ -236,6 +241,7 @@ function extractPropertyData(formData: FormData) {
     amenities: JSON.parse((formData.get("amenities") as string) || "[]"),
     destacada: formData.get("destacada") === "true",
     activa: formData.get("activa") === "true",
+    vendida: formData.get("vendida") === "true",
   };
 }
 
@@ -244,10 +250,10 @@ export async function createProperty(formData: FormData) {
   const slug = slugify(d.titulo) + "-" + Date.now().toString(36);
 
   const result = await queryOne<Property>(
-    `INSERT INTO properties (titulo, slug, descripcion, precio, moneda, operacion, tipo_propiedad, direccion, ciudad, provincia, ambientes, dormitorios, banos, toilettes, cocheras, superficie_cubierta, superficie_total, antiguedad, antiguedad_anos, expensas, expensas_moneda, apto_credito, latitud, longitud, amenities, destacada, activa)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+    `INSERT INTO properties (titulo, slug, descripcion, precio, moneda, operacion, tipo_propiedad, direccion, ciudad, provincia, ambientes, dormitorios, banos, toilettes, cocheras, superficie_cubierta, superficie_total, antiguedad, antiguedad_anos, expensas, expensas_moneda, apto_credito, latitud, longitud, amenities, destacada, activa, vendida)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)
      RETURNING *`,
-    [d.titulo, slug, d.descripcion, d.precio, d.moneda, d.operacion, d.tipo_propiedad, d.direccion, d.ciudad, d.provincia, d.ambientes, d.dormitorios, d.banos, d.toilettes, d.cocheras, d.superficie_cubierta, d.superficie_total, d.antiguedad, d.antiguedad_anos, d.expensas, d.expensas_moneda, d.apto_credito, d.latitud, d.longitud, d.amenities, d.destacada, d.activa]
+    [d.titulo, slug, d.descripcion, d.precio, d.moneda, d.operacion, d.tipo_propiedad, d.direccion, d.ciudad, d.provincia, d.ambientes, d.dormitorios, d.banos, d.toilettes, d.cocheras, d.superficie_cubierta, d.superficie_total, d.antiguedad, d.antiguedad_anos, d.expensas, d.expensas_moneda, d.apto_credito, d.latitud, d.longitud, d.amenities, d.destacada, d.activa, d.vendida]
   );
 
   revalidatePath("/", "layout");
@@ -258,9 +264,9 @@ export async function updateProperty(id: string, formData: FormData) {
   const d = extractPropertyData(formData);
 
   await query(
-    `UPDATE properties SET titulo=$1, descripcion=$2, precio=$3, moneda=$4, operacion=$5, tipo_propiedad=$6, direccion=$7, ciudad=$8, provincia=$9, ambientes=$10, dormitorios=$11, banos=$12, toilettes=$13, cocheras=$14, superficie_cubierta=$15, superficie_total=$16, antiguedad=$17, antiguedad_anos=$18, expensas=$19, expensas_moneda=$20, apto_credito=$21, latitud=$22, longitud=$23, amenities=$24, destacada=$25, activa=$26
-     WHERE id=$27`,
-    [d.titulo, d.descripcion, d.precio, d.moneda, d.operacion, d.tipo_propiedad, d.direccion, d.ciudad, d.provincia, d.ambientes, d.dormitorios, d.banos, d.toilettes, d.cocheras, d.superficie_cubierta, d.superficie_total, d.antiguedad, d.antiguedad_anos, d.expensas, d.expensas_moneda, d.apto_credito, d.latitud, d.longitud, d.amenities, d.destacada, d.activa, id]
+    `UPDATE properties SET titulo=$1, descripcion=$2, precio=$3, moneda=$4, operacion=$5, tipo_propiedad=$6, direccion=$7, ciudad=$8, provincia=$9, ambientes=$10, dormitorios=$11, banos=$12, toilettes=$13, cocheras=$14, superficie_cubierta=$15, superficie_total=$16, antiguedad=$17, antiguedad_anos=$18, expensas=$19, expensas_moneda=$20, apto_credito=$21, latitud=$22, longitud=$23, amenities=$24, destacada=$25, activa=$26, vendida=$27
+     WHERE id=$28`,
+    [d.titulo, d.descripcion, d.precio, d.moneda, d.operacion, d.tipo_propiedad, d.direccion, d.ciudad, d.provincia, d.ambientes, d.dormitorios, d.banos, d.toilettes, d.cocheras, d.superficie_cubierta, d.superficie_total, d.antiguedad, d.antiguedad_anos, d.expensas, d.expensas_moneda, d.apto_credito, d.latitud, d.longitud, d.amenities, d.destacada, d.activa, d.vendida, id]
   );
 
   revalidatePath("/", "layout");

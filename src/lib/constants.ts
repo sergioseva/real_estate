@@ -64,6 +64,7 @@ export const ADMIN_SORTABLE_COLUMNS: Record<string, string> = {
   precio: "precio",
   ciudad: "ciudad",
   activa: "activa",
+  vendida: "vendida",
   fecha_alta: "fecha_alta",
   fecha_archivada: "fecha_archivada",
 };

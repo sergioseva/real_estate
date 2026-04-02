@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bed, Home, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { SoldRibbon } from "@/components/ui/sold-ribbon";
 import { ThumbnailImage } from "@/components/ui/thumbnail-image";
 import { formatPrice } from "@/lib/utils";
 import type { Property } from "@/types";
@@ -13,6 +14,7 @@ export function PropertyCard({ property }: { property: Property }) {
       <div className="overflow-hidden rounded-lg border border-border bg-white shadow-sm transition-shadow hover:shadow-md">
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+          {property.vendida && <SoldRibbon operacion={property.operacion} />}
           {mainImage ? (
             <ThumbnailImage
               src={mainImage.url}

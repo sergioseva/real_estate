@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { thumbUrl, microThumbUrl } from "@/lib/utils";
+import { SoldRibbon } from "@/components/ui/sold-ribbon";
 import type { PropertyImage } from "@/types";
 
 function useImageLoader(urls: string[]) {
@@ -18,7 +19,7 @@ function useImageLoader(urls: string[]) {
   return { loaded, preload };
 }
 
-export function Gallery({ images }: { images: PropertyImage[] }) {
+export function Gallery({ images, vendida, operacion }: { images: PropertyImage[]; vendida?: boolean; operacion?: "venta" | "alquiler" }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -39,6 +40,8 @@ export function Gallery({ images }: { images: PropertyImage[] }) {
       setCurrentIndex={setCurrentIndex}
       lightboxOpen={lightboxOpen}
       setLightboxOpen={setLightboxOpen}
+      vendida={vendida}
+      operacion={operacion}
     />
   );
 }
@@ -49,12 +52,16 @@ function GalleryInner({
   setCurrentIndex,
   lightboxOpen,
   setLightboxOpen,
+  vendida,
+  operacion,
 }: {
   sorted: PropertyImage[];
   currentIndex: number;
   setCurrentIndex: (i: number) => void;
   lightboxOpen: boolean;
   setLightboxOpen: (open: boolean) => void;
+  vendida?: boolean;
+  operacion?: "venta" | "alquiler";
 }) {
   const { loaded, preload } = useImageLoader(sorted.map((img) => img.url));
 
@@ -99,6 +106,7 @@ function GalleryInner({
         className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-lg bg-muted"
         onClick={() => setLightboxOpen(true)}
       >
+        {vendida && <SoldRibbon operacion={operacion || "venta"} />}
         {/* Thumb shown immediately, hidden once full loads */}
         <img
           src={thumbUrl(current.url)}

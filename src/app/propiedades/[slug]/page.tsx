@@ -47,7 +47,7 @@ export default async function PropertyDetailPage({
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Left: Gallery + Description */}
         <div className="lg:col-span-2">
-          <Gallery images={property.images || []} />
+          <Gallery images={property.images || []} vendida={property.vendida} operacion={property.operacion} />
 
           <div className="mt-6">
             <div className="flex flex-wrap items-center gap-3">

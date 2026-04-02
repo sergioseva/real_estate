@@ -336,6 +336,16 @@ export function PropertyForm({ property, returnUrl }: { property?: Property; ret
             />
             <span className="text-sm font-medium">Activa</span>
           </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="vendida"
+              value="true"
+              defaultChecked={property?.vendida}
+              className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+            />
+            <span className="text-sm font-medium">Vendida</span>
+          </label>
         </div>
       </div>
 

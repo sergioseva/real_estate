@@ -4,7 +4,7 @@ import { Plus, Edit, Archive } from "lucide-react";
 import { getAdminProperties, getAdminCities } from "@/actions/properties";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArchiveButton, UnarchiveButton, DeleteButton, ActiveToggle } from "@/components/admin/property-actions";
+import { ArchiveButton, UnarchiveButton, DeleteButton, ActiveToggle, VendidaToggle } from "@/components/admin/property-actions";
 import { AdminPropertyFilters } from "@/components/admin/property-filters";
 import { SortableHeader } from "@/components/admin/sortable-header";
 import { AdminPagination } from "@/components/admin/admin-pagination";
@@ -147,10 +147,16 @@ export default async function AdminPropiedadesPage({
               </Badge>
               <span className="text-xs text-muted-foreground">{property.tipo_propiedad}</span>
               {!showArchived && (
-                <label className="flex items-center gap-1 text-xs">
-                  <ActiveToggle propertyId={property.id} activa={property.activa} />
-                  Activa
-                </label>
+                <>
+                  <label className="flex items-center gap-1 text-xs">
+                    <ActiveToggle propertyId={property.id} activa={property.activa} />
+                    Activa
+                  </label>
+                  <label className="flex items-center gap-1 text-xs">
+                    <VendidaToggle propertyId={property.id} vendida={property.vendida} operacion={property.operacion} />
+                    {property.operacion === "alquiler" ? "Alquilada" : "Vendida"}
+                  </label>
+                </>
               )}
             </div>
             <div className="mt-2 flex items-center justify-between text-sm">
@@ -185,7 +191,10 @@ export default async function AdminPropiedadesPage({
               <SortableHeader column="precio" label="Precio" currentSort={orden} currentDir={dir} />
               <SortableHeader column="ciudad" label="Ciudad" currentSort={orden} currentDir={dir} />
               {!showArchived && (
-                <SortableHeader column="activa" label="Activa" currentSort={orden} currentDir={dir} />
+                <>
+                  <SortableHeader column="activa" label="Activa" currentSort={orden} currentDir={dir} />
+                  <SortableHeader column="vendida" label="Cerrada" currentSort={orden} currentDir={dir} />
+                </>
               )}
               <SortableHeader column="fecha_alta" label="Fecha alta" currentSort={orden} currentDir={dir} />
               {showArchived && (
@@ -217,9 +226,14 @@ export default async function AdminPropiedadesPage({
                   {property.ciudad}
                 </td>
                 {!showArchived && (
-                  <td className="px-4 py-3 text-center">
-                    <ActiveToggle propertyId={property.id} activa={property.activa} />
-                  </td>
+                  <>
+                    <td className="px-4 py-3 text-center">
+                      <ActiveToggle propertyId={property.id} activa={property.activa} />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <VendidaToggle propertyId={property.id} vendida={property.vendida} operacion={property.operacion} />
+                    </td>
+                  </>
                 )}
                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                   {formatDate(property.fecha_alta)}
