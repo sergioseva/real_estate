@@ -40,9 +40,17 @@ export async function getProperties(filters: PropertyFilters = {}) {
     conditions.push(`tipo_propiedad = $${paramIdx++}`);
     params.push(filters.tipo_propiedad);
   }
+  if (filters.provincia) {
+    conditions.push(`provincia = $${paramIdx++}`);
+    params.push(filters.provincia);
+  }
   if (filters.ciudad) {
     conditions.push(`ciudad ILIKE $${paramIdx++}`);
     params.push(`%${filters.ciudad}%`);
+  }
+  if (filters.moneda) {
+    conditions.push(`moneda = $${paramIdx++}`);
+    params.push(filters.moneda);
   }
   if (filters.precio_min) {
     conditions.push(`precio >= $${paramIdx++}`);
@@ -60,6 +68,30 @@ export async function getProperties(filters: PropertyFilters = {}) {
     conditions.push(`dormitorios >= $${paramIdx++}`);
     params.push(filters.dormitorios);
   }
+  if (filters.apto_credito) {
+    conditions.push(`apto_credito = $${paramIdx++}`);
+    params.push(true);
+  }
+  if (filters.antiguedad) {
+    conditions.push(`antiguedad = $${paramIdx++}`);
+    params.push(filters.antiguedad);
+  }
+  if (filters.superficie_cubierta_min) {
+    conditions.push(`superficie_cubierta >= $${paramIdx++}`);
+    params.push(filters.superficie_cubierta_min);
+  }
+  if (filters.superficie_cubierta_max) {
+    conditions.push(`superficie_cubierta <= $${paramIdx++}`);
+    params.push(filters.superficie_cubierta_max);
+  }
+  if (filters.superficie_total_min) {
+    conditions.push(`superficie_total >= $${paramIdx++}`);
+    params.push(filters.superficie_total_min);
+  }
+  if (filters.superficie_total_max) {
+    conditions.push(`superficie_total <= $${paramIdx++}`);
+    params.push(filters.superficie_total_max);
+  }
   if (filters.search) {
     conditions.push(`(titulo ILIKE $${paramIdx} OR direccion ILIKE $${paramIdx} OR ciudad ILIKE $${paramIdx})`);
     params.push(`%${filters.search}%`);
@@ -70,9 +102,22 @@ export async function getProperties(filters: PropertyFilters = {}) {
   const countParams = [...params];
   const total = await queryCount(`SELECT count(*) FROM properties WHERE ${where}`, countParams);
 
+  const orderBy = (() => {
+    switch (filters.orden) {
+      case "precio_asc":
+        return "precio ASC, updated_at DESC";
+      case "precio_desc":
+        return "precio DESC, updated_at DESC";
+      case "destacadas":
+        return "destacada DESC, updated_at DESC";
+      default:
+        return "updated_at DESC";
+    }
+  })();
+
   params.push(ITEMS_PER_PAGE, offset);
   const properties = await query<Property>(
-    `SELECT * FROM properties WHERE ${where} ORDER BY created_at DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+    `SELECT * FROM properties WHERE ${where} ORDER BY ${orderBy} LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
     params
   );
 

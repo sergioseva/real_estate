@@ -52,6 +52,15 @@ export const ANTIGUEDADES = [
   { value: "en_construccion", label: "En construcción" },
 ] as const;
 
+export const SORT_OPTIONS = [
+  { value: "updated", label: "Última actualización" },
+  { value: "precio_asc", label: "Precio más bajo" },
+  { value: "precio_desc", label: "Precio más alto" },
+  { value: "destacadas", label: "Destacadas primero" },
+] as const;
+
+export const DEFAULT_SORT = "updated";
+
 export const ITEMS_PER_PAGE = 12;
 
 export const ADMIN_ITEMS_PER_PAGE = 50;

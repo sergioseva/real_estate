@@ -2,12 +2,17 @@ import { Suspense } from "react";
 import { getProperties, getCities } from "@/actions/properties";
 import { PropertyGrid } from "@/components/properties/property-grid";
 import { PropertyFilters } from "@/components/properties/property-filters";
+import { PropertySort } from "@/components/properties/property-sort";
 import { Pagination } from "@/components/properties/pagination";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Propiedades",
 };
+
+const toNum = (v?: string) => (v ? Number(v) : undefined);
+const toMoneda = (v?: string): "ARS" | "USD" | undefined =>
+  v === "ARS" || v === "USD" ? v : undefined;
 
 export default async function PropiedadesPage({
   searchParams,
@@ -18,14 +23,25 @@ export default async function PropiedadesPage({
   const filters = {
     operacion: params.operacion,
     tipo_propiedad: params.tipo_propiedad,
+    provincia: params.provincia,
     ciudad: params.ciudad,
-    ambientes: params.ambientes ? Number(params.ambientes) : undefined,
-    dormitorios: params.dormitorios ? Number(params.dormitorios) : undefined,
+    moneda: toMoneda(params.moneda),
+    precio_min: toNum(params.precio_min),
+    precio_max: toNum(params.precio_max),
+    ambientes: toNum(params.ambientes),
+    dormitorios: toNum(params.dormitorios),
+    apto_credito: params.apto_credito === "true" ? true : undefined,
+    antiguedad: params.antiguedad,
+    superficie_cubierta_min: toNum(params.superficie_cubierta_min),
+    superficie_cubierta_max: toNum(params.superficie_cubierta_max),
+    superficie_total_min: toNum(params.superficie_total_min),
+    superficie_total_max: toNum(params.superficie_total_max),
     search: params.search,
-    page: params.page ? Number(params.page) : 1,
+    orden: params.orden,
+    page: toNum(params.page) ?? 1,
   };
 
-  const [{ properties, totalPages, currentPage }, cities] = await Promise.all([
+  const [{ properties, total, totalPages, currentPage }, cities] = await Promise.all([
     getProperties(filters),
     getCities(),
   ]);
@@ -37,17 +53,26 @@ export default async function PropiedadesPage({
         Encontra la propiedad ideal para vos
       </p>
 
-      <div className="mt-6">
-        <Suspense fallback={null}>
-          <PropertyFilters cities={cities} />
-        </Suspense>
-      </div>
+      <div className="mt-6 md:grid md:grid-cols-[280px_1fr] md:gap-6">
+        <aside>
+          <Suspense fallback={null}>
+            <PropertyFilters cities={cities} />
+          </Suspense>
+        </aside>
 
-      <div className="mt-8">
-        <PropertyGrid properties={properties} />
+        <div className="mt-4 md:mt-0">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              {total} {total === 1 ? "propiedad" : "propiedades"}
+            </p>
+            <Suspense fallback={null}>
+              <PropertySort />
+            </Suspense>
+          </div>
+          <PropertyGrid properties={properties} />
+          <Pagination currentPage={currentPage} totalPages={totalPages} />
+        </div>
       </div>
-
-      <Pagination currentPage={currentPage} totalPages={totalPages} />
     </div>
   );
 }

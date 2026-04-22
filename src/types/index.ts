@@ -66,11 +66,20 @@ export interface ContactInfo {
 export interface PropertyFilters {
   operacion?: string;
   tipo_propiedad?: string;
+  provincia?: string;
   ciudad?: string;
+  moneda?: "ARS" | "USD";
   precio_min?: number;
   precio_max?: number;
   dormitorios?: number;
   ambientes?: number;
+  apto_credito?: boolean;
+  antiguedad?: string;
+  superficie_cubierta_min?: number;
+  superficie_cubierta_max?: number;
+  superficie_total_min?: number;
+  superficie_total_max?: number;
   search?: string;
+  orden?: string;
   page?: number;
 }
